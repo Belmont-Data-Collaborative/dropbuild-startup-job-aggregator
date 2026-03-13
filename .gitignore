@@ -1,0 +1,10 @@
+.vercel
+.next
+node_modules
+.env.local
+scraper/.env
+scraper/__pycache__
+scraper/scrapers/__pycache__
+*.log
+build-*.log
+agent-stream.log
