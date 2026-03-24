@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, Bookmark, Loader2 } from 'lucide-react';
+import { X, ExternalLink, Bookmark, Loader2, Tag, FileText, Calendar } from 'lucide-react';
 import type { Job } from '@/types';
 
 function formatDate(dateStr: string | null): string {
@@ -108,8 +108,8 @@ function DescriptionRenderer({ text }: { text: string }) {
             <div key={idx} className="grid grid-cols-2 gap-x-4 gap-y-2">
               {section.pairs.map(({ label, value }) => (
                 <div key={label}>
-                  <div className="text-xs text-zinc-500 mb-0.5">{label}</div>
-                  <div className="text-sm text-zinc-200 font-medium">{value}</div>
+                  <div className="text-xs text-on-surface-variant mb-0.5">{label}</div>
+                  <div className="text-sm text-on-surface font-medium">{value}</div>
                 </div>
               ))}
             </div>
@@ -119,14 +119,14 @@ function DescriptionRenderer({ text }: { text: string }) {
           return (
             <div
               key={idx}
-              className="text-xs font-semibold uppercase tracking-wider text-zinc-400 pt-2 border-t border-zinc-800"
+              className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant pt-2 border-t border-outline-variant"
             >
               {section.text}
             </div>
           );
         }
         return (
-          <p key={idx} className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+          <p key={idx} className="text-sm text-on-surface leading-relaxed whitespace-pre-wrap">
             {section.text}
           </p>
         );
@@ -152,6 +152,7 @@ export default function JobDetailPanel({
   const [fetchedDescription, setFetchedDescription] = useState<string | null>(null);
   const [descLoading, setDescLoading] = useState(false);
   const [descError, setDescError] = useState(false);
+  const [bookmarkKey, setBookmarkKey] = useState(0);
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
@@ -188,8 +189,8 @@ export default function JobDetailPanel({
   const snippet = job.raw_snippet?.trim() ?? fetchedDescription;
 
   const panelClass = isDesktop
-    ? 'fixed right-0 top-0 bottom-0 w-[420px] bg-zinc-900 border-l border-zinc-800 z-40 overflow-y-auto flex flex-col'
-    : 'fixed bottom-0 left-0 right-0 h-[85vh] bg-zinc-900 border-t border-zinc-800 z-40 rounded-t-xl overflow-y-auto flex flex-col';
+    ? 'w-[420px] flex-shrink-0 bg-surface border-l border-outline-variant flex flex-col h-full overflow-y-auto animate-slide-in-right'
+    : 'fixed bottom-0 left-0 right-0 h-[85vh] bg-surface border-t border-outline-variant z-40 rounded-t-shape-xl overflow-y-auto flex flex-col shadow-elevation-3 animate-slide-in-up';
 
   return (
     <>
@@ -204,58 +205,63 @@ export default function JobDetailPanel({
         {/* Mobile drag handle */}
         {!isDesktop && (
           <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+            <div className="w-10 h-1 bg-outline-variant rounded-full" />
           </div>
         )}
 
         {/* Header */}
-        <div className="flex justify-between items-start p-5 border-b border-zinc-800 flex-shrink-0">
+        <div className="flex justify-between items-start p-4 border-b border-outline-variant flex-shrink-0">
           <div className="flex-1 min-w-0 pr-3">
-            <div className="text-base font-semibold text-zinc-50 leading-tight">
+            <div className="text-base font-semibold text-on-surface leading-tight">
               {job.role_title}
             </div>
-            <div className="text-sm text-zinc-400 mt-0.5">{job.company}</div>
+            <div className="text-sm text-on-surface-variant mt-0.5">{job.company}</div>
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-100 p-1 rounded hover:bg-zinc-800 flex-shrink-0"
+            aria-label="Close"
+            className="text-on-surface-variant hover:text-on-surface p-1.5 rounded-shape-full hover:bg-black/[0.08] flex-shrink-0 transition-colors"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Meta row */}
           <div className="flex items-center gap-2 flex-wrap">
             <a
               href={job.source_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs bg-zinc-800 text-zinc-300 px-2 py-1 rounded-md hover:bg-zinc-700 transition-colors"
+              className="flex items-center gap-1 text-xs bg-surface-container text-on-surface-variant px-2.5 py-1 rounded-shape-full hover:bg-black/[0.08] transition-colors font-medium"
             >
               {job.source_name}
-              <ExternalLink size={10} className="text-zinc-500" />
+              <ExternalLink size={10} className="opacity-60" />
             </a>
-            <span className="text-xs text-zinc-500">
+            <span className="flex items-center gap-1 text-xs text-on-surface-variant">
+              <Calendar size={11} className="opacity-60" />
               Added {formatDate(job.date_scraped)}
             </span>
             {job.date_posted && (
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-on-surface-variant">
                 · Posted {formatDate(job.date_posted)}
               </span>
             )}
           </div>
 
-          {/* Why this job is here — matched tags */}
+          {/* Tags */}
           {job.tags && job.tags.length > 0 && (
             <div>
-              <div className="text-xs text-zinc-500 mb-1.5">Why you&apos;re seeing this</div>
+              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant mb-1.5">
+                <Tag size={11} />
+                Matched tags
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {job.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300"
+                    className="text-xs px-2.5 py-0.5 rounded-shape-full bg-secondary-container text-on-secondary-container"
                   >
                     {tag}
                   </span>
@@ -266,22 +272,34 @@ export default function JobDetailPanel({
 
           {/* Description */}
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-3">
+              <FileText size={11} />
               Job Details
             </div>
             {descLoading ? (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
+              <div className="flex items-center gap-2 text-sm text-on-surface-variant">
                 <Loader2 size={14} className="animate-spin" />
                 Loading job details…
               </div>
             ) : snippet ? (
               <DescriptionRenderer text={snippet} />
             ) : descError ? (
-              <div className="text-sm text-zinc-600 italic">
-                Could not load description — open the listing directly.
+              <div className="flex flex-col gap-3">
+                <div className="text-sm text-on-surface-variant/60 italic">
+                  Could not load description.
+                </div>
+                <a
+                  href={job.listing_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-primary hover:opacity-80 transition-opacity w-fit font-medium"
+                >
+                  <ExternalLink size={13} />
+                  Open listing directly
+                </a>
               </div>
             ) : (
-              <div className="text-sm text-zinc-600 italic">
+              <div className="text-sm text-on-surface-variant/60 italic">
                 No description available.
               </div>
             )}
@@ -289,33 +307,42 @@ export default function JobDetailPanel({
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-5 border-t border-zinc-800 space-y-2">
+        <div className="flex-shrink-0 p-4 border-t border-outline-variant space-y-2">
           <div className="flex gap-2">
             <button
-              onClick={() => onToggleSave(job.id)}
-              className="p-2.5 rounded-md border border-zinc-700 hover:border-zinc-600 transition-colors flex-shrink-0"
+              onClick={() => { onToggleSave(job.id); setBookmarkKey((k) => k + 1); }}
+              className={`p-2 rounded-shape-sm border transition-colors flex-shrink-0 ${
+                isSaved
+                  ? 'bg-secondary-container border-secondary-container text-on-secondary-container'
+                  : 'border-outline text-on-surface-variant hover:bg-black/[0.08]'
+              }`}
               title={isSaved ? 'Remove bookmark' : 'Save this job'}
             >
               <Bookmark
+                key={bookmarkKey}
                 size={16}
-                className={isSaved ? 'text-violet-400 fill-violet-400' : 'text-zinc-500'}
+                className={`${isSaved ? 'fill-current' : ''} ${bookmarkKey > 0 ? 'animate-bookmark-pop' : ''}`}
               />
             </button>
-            <button
-              onClick={() => window.open(job.listing_url, '_blank')}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-md py-2.5 transition-colors flex items-center justify-center gap-1.5"
+            <a
+              href={job.listing_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 bg-primary text-on-primary text-sm font-medium rounded-shape-full py-2 transition-colors hover:opacity-90 flex items-center justify-center gap-1.5"
             >
               <ExternalLink size={13} />
               View &amp; Apply
-            </button>
+            </a>
           </div>
-          <button
-            onClick={() => window.open(job.source_url, '_blank')}
-            className="w-full border border-zinc-700 hover:border-zinc-600 text-zinc-400 hover:text-zinc-200 text-sm rounded-md py-2 transition-colors flex items-center justify-center gap-1.5"
+          <a
+            href={job.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full border border-outline text-on-surface-variant text-sm rounded-shape-full py-1.5 transition-colors hover:bg-black/[0.08] flex items-center justify-center gap-1.5"
           >
             <ExternalLink size={13} />
             Browse all jobs at {job.source_name}
-          </button>
+          </a>
         </div>
       </div>
     </>

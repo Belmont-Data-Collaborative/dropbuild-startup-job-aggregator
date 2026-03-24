@@ -1,9 +1,9 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
-import { Briefcase, Bookmark, Settings, Menu, X, BookOpen } from 'lucide-react';
+import { Briefcase, Bookmark, Settings, Menu, X, BookOpen, Zap, LogOut } from 'lucide-react';
 import FilterPanel from '@/components/FilterPanel';
 import { getSavedIds } from '@/lib/savedJobs';
 
@@ -15,29 +15,26 @@ const navLinks = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [savedCount, setSavedCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const handleSignOut = async () => {
+    await fetch('/api/auth', { method: 'DELETE' });
+    router.push('/login');
+  };
+
   useEffect(() => {
     setSavedCount(getSavedIds().length);
-    const handleStorage = () => {
-      setSavedCount(getSavedIds().length);
-    };
+    const handleStorage = () => setSavedCount(getSavedIds().length);
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Brand */}
-      <div className="px-1">
-        <div className="text-sm font-semibold text-zinc-50 tracking-tight">Startup Jobs</div>
-        <div className="text-xs text-zinc-500 mt-0.5">Jobs from top startup investors</div>
-      </div>
-      <div className="border-b border-zinc-700/60 my-3" />
-
-      {/* Nav */}
-      <nav className="flex flex-col gap-0.5">
+  // Nav destinations + filters + admin link (shared between desktop and mobile modal)
+  const drawerNav = (
+    <>
+      <nav className="flex flex-col gap-0.5 px-2 mt-0.5">
         {navLinks.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (
@@ -45,16 +42,16 @@ export default function Sidebar() {
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors relative ${
+              className={`flex items-center gap-2.5 px-3 h-9 rounded-shape-sm text-sm font-medium transition-colors border-l-2 ${
                 isActive
-                  ? 'bg-zinc-800 text-zinc-50 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-violet-400 before:rounded-full'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                  ? 'bg-secondary-container text-on-secondary-container border-primary'
+                  : 'text-on-surface-variant hover:bg-black/[0.08] hover:text-on-surface border-transparent'
               }`}
             >
-              <Icon size={16} />
-              {label}
+              <Icon size={17} className={`flex-shrink-0 ${isActive ? 'text-primary' : ''}`} />
+              <span className="flex-1">{label}</span>
               {label === 'Saved Jobs' && savedCount > 0 && (
-                <span className="bg-violet-500 text-white text-xs px-1.5 rounded ml-auto">
+                <span className="bg-primary text-on-primary text-xs px-2 py-0.5 rounded-shape-full min-w-[20px] text-center tabular-nums">
                   {savedCount}
                 </span>
               )}
@@ -63,71 +60,95 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Filters (auto-expands area) */}
       <Suspense fallback={null}>
         <FilterPanel />
       </Suspense>
 
-      {/* Admin — subtle, at the bottom */}
-      <div className="mt-auto border-t border-zinc-800 pt-3">
+      <div className="mt-auto px-2 pt-1.5 border-t border-outline-variant mx-1 mb-1 space-y-0.5">
         <Link
           href="/admin"
           onClick={() => setMobileOpen(false)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs transition-colors ${
+          className={`flex items-center gap-2.5 px-3 h-8 rounded-shape-sm text-xs font-medium transition-colors border-l-2 ${
             pathname === '/admin'
-              ? 'bg-zinc-800 text-zinc-400'
-              : 'text-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/40'
+              ? 'bg-secondary-container text-on-secondary-container border-primary'
+              : 'text-on-surface-variant hover:bg-black/[0.08] hover:text-on-surface border-transparent'
           }`}
         >
-          <Settings size={13} />
+          <Settings size={13} className="flex-shrink-0" />
           Admin settings
         </Link>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2.5 px-3 h-8 rounded-shape-sm text-xs font-medium w-full text-on-surface-variant hover:bg-error-container hover:text-on-error-container transition-colors"
+        >
+          <LogOut size={13} className="flex-shrink-0" />
+          Sign out
+        </button>
       </div>
-    </div>
+    </>
   );
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-60 bg-zinc-900 border-r border-zinc-800 overflow-hidden p-3 hidden md:block z-30">
-        {sidebarContent}
+      {/* ── Desktop — permanent navigation drawer ── */}
+      <aside className="fixed left-0 top-0 bottom-0 w-72 bg-surface-container overflow-hidden hidden md:flex flex-col z-30">
+        {/* Drawer header */}
+        <div className="flex items-center gap-2.5 px-4 pt-3 pb-2 flex-shrink-0">
+          <div className="w-7 h-7 rounded-shape-sm bg-primary flex items-center justify-center flex-shrink-0 shadow-elevation-1">
+            <Zap size={14} className="text-on-primary" fill="currentColor" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-on-surface tracking-tight">Startup Jobs</div>
+            <div className="text-xs text-on-surface-variant leading-none mt-0.5">Jobs from top investors</div>
+          </div>
+        </div>
+        <div className="border-b border-outline-variant mx-3 mb-0.5" />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {drawerNav}
+        </div>
       </aside>
       {/* Desktop spacer */}
-      <div className="hidden md:block w-60 flex-shrink-0" />
+      <div className="hidden md:block w-72 flex-shrink-0" />
 
-      {/* Mobile top bar */}
-      <div className="flex md:hidden items-center px-3 h-12 bg-zinc-900 border-b border-zinc-800 fixed top-0 left-0 right-0 z-30">
+      {/* ── Mobile — Top App Bar (M3) ── */}
+      <div className="flex md:hidden items-center px-2 h-14 bg-surface-container fixed top-0 left-0 right-0 z-30 shadow-elevation-1">
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-1 text-zinc-400 hover:text-zinc-50"
+          className="p-2 rounded-shape-full text-on-surface-variant hover:bg-black/[0.08] transition-colors"
+          aria-label="Open navigation"
         >
-          <Menu size={20} />
+          <Menu size={22} />
         </button>
-        <span className="text-sm font-semibold text-zinc-50 ml-2">
-          Startup Jobs
-        </span>
+        <span className="text-base font-medium text-on-surface ml-2">Startup Jobs</span>
       </div>
 
-      {/* Mobile sidebar overlay */}
+      {/* ── Mobile — Modal navigation drawer ── */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
+          {/* Scrim */}
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute left-0 top-0 bottom-0 w-60 bg-zinc-900 border-r border-zinc-800 overflow-hidden p-3 z-10">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-semibold text-zinc-50">
-                Startup Jobs
-              </span>
+          {/* Drawer */}
+          <aside className="absolute left-0 top-0 bottom-0 w-72 bg-surface-container overflow-hidden flex flex-col shadow-elevation-3 z-10">
+            <div className="flex items-center justify-between px-4 h-14 border-b border-outline-variant flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-shape-sm bg-primary flex items-center justify-center flex-shrink-0 shadow-elevation-1">
+                  <Zap size={14} className="text-on-primary" fill="currentColor" />
+                </div>
+                <span className="text-sm font-semibold text-on-surface tracking-tight">Startup Jobs</span>
+              </div>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-1 text-zinc-400 hover:text-zinc-50"
+                className="p-1.5 rounded-shape-full text-on-surface-variant hover:bg-black/[0.08] transition-colors"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
-            {sidebarContent}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {drawerNav}
+            </div>
           </aside>
         </div>
       )}
