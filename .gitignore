@@ -1,6 +1,7 @@
 .vercel
 .next
 node_modules
+.env
 .env.local
 scraper/.env
 scraper/__pycache__

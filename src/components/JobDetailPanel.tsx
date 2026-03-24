@@ -15,7 +15,6 @@ function formatDate(dateStr: string | null): string {
   return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-// Known metadata labels to pull out as key-value pairs
 const META_LABELS = [
   'Department', 'Employment Type', 'Location', 'Workplace type', 'Workplace Type',
   'Reporting To', 'Job Type', 'Salary', 'Compensation', 'Level', 'Team',
@@ -38,12 +37,9 @@ function parseDescription(raw: string): Section[] {
 
   let i = 0;
 
-  // First pass: extract leading key-value metadata block
   while (i < lines.length) {
     const line = lines[i];
-    const isLabel = META_LABELS.some(
-      (lbl) => lbl.toLowerCase() === line.toLowerCase()
-    );
+    const isLabel = META_LABELS.some((lbl) => lbl.toLowerCase() === line.toLowerCase());
     if (isLabel && i + 1 < lines.length && lines[i + 1].length < 80) {
       metaPairs.push({ label: line, value: lines[i + 1] });
       i += 2;
@@ -56,47 +52,28 @@ function parseDescription(raw: string): Section[] {
     sections.push({ kind: 'meta', pairs: metaPairs });
   }
 
-  // Second pass: remaining lines → headings or body paragraphs
   const remaining = lines.slice(i);
   let j = 0;
 
   while (j < remaining.length) {
     const line = remaining[j];
 
-    // Heuristic: a heading is a short line (< 60 chars) that is NOT a sentence
-    // (doesn't end with punctuation) and is surrounded by context
     const isHeading =
       line.length < 60 &&
       !/[.!?,;]$/.test(line) &&
-      !/^[a-z]/.test(line) && // doesn't start lowercase
-      (j === 0 || remaining[j - 1].length > 40 || j > 0); // previous line is body or start
+      !/^[a-z]/.test(line) &&
+      (j === 0 || remaining[j - 1].length > 40 || j > 0);
 
-    // Skip noise lines
     const isNoise =
       line.length < 4 ||
       /^(apply now|register your interest|view.*profile|not quite right)/i.test(line);
 
-    if (isNoise) {
-      j++;
-      continue;
-    }
+    if (isNoise) { j++; continue; }
 
     if (isHeading && line.length < 60) {
-      // Look ahead: if next line is short too and looks like a value, treat as inline kv
-      if (
-        j + 1 < remaining.length &&
-        remaining[j + 1].length < 80 &&
-        remaining[j + 1].length > 2
-      ) {
-        // Could be a standalone section heading with body below
-        sections.push({ kind: 'heading', text: line });
-        j++;
-      } else {
-        sections.push({ kind: 'heading', text: line });
-        j++;
-      }
+      sections.push({ kind: 'heading', text: line });
+      j++;
     } else {
-      // Accumulate body text into one paragraph block
       let body = line;
       j++;
       while (j < remaining.length) {
@@ -224,6 +201,13 @@ export default function JobDetailPanel({
       )}
 
       <div className={panelClass}>
+        {/* Mobile drag handle */}
+        {!isDesktop && (
+          <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-start p-5 border-b border-zinc-800 flex-shrink-0">
           <div className="flex-1 min-w-0 pr-3">
@@ -254,7 +238,7 @@ export default function JobDetailPanel({
               <ExternalLink size={10} className="text-zinc-500" />
             </a>
             <span className="text-xs text-zinc-500">
-              Scraped {formatDate(job.date_scraped)}
+              Added {formatDate(job.date_scraped)}
             </span>
             {job.date_posted && (
               <span className="text-xs text-zinc-500">
@@ -263,17 +247,20 @@ export default function JobDetailPanel({
             )}
           </div>
 
-          {/* Tags */}
+          {/* Why this job is here — matched tags */}
           {job.tags && job.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {job.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300"
-                >
-                  {tag}
-                </span>
-              ))}
+            <div>
+              <div className="text-xs text-zinc-500 mb-1.5">Why you&apos;re seeing this</div>
+              <div className="flex flex-wrap gap-1.5">
+                {job.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -285,7 +272,7 @@ export default function JobDetailPanel({
             {descLoading ? (
               <div className="flex items-center gap-2 text-sm text-zinc-500">
                 <Loader2 size={14} className="animate-spin" />
-                Loading…
+                Loading job details…
               </div>
             ) : snippet ? (
               <DescriptionRenderer text={snippet} />
@@ -307,7 +294,7 @@ export default function JobDetailPanel({
             <button
               onClick={() => onToggleSave(job.id)}
               className="p-2.5 rounded-md border border-zinc-700 hover:border-zinc-600 transition-colors flex-shrink-0"
-              title={isSaved ? 'Remove bookmark' : 'Bookmark this job'}
+              title={isSaved ? 'Remove bookmark' : 'Save this job'}
             >
               <Bookmark
                 size={16}
@@ -319,7 +306,7 @@ export default function JobDetailPanel({
               className="flex-1 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-md py-2.5 transition-colors flex items-center justify-center gap-1.5"
             >
               <ExternalLink size={13} />
-              Apply / Open Listing
+              View &amp; Apply
             </button>
           </div>
           <button
@@ -327,7 +314,7 @@ export default function JobDetailPanel({
             className="w-full border border-zinc-700 hover:border-zinc-600 text-zinc-400 hover:text-zinc-200 text-sm rounded-md py-2 transition-colors flex items-center justify-center gap-1.5"
           >
             <ExternalLink size={13} />
-            View Source Board — {job.source_name}
+            Browse all jobs at {job.source_name}
           </button>
         </div>
       </div>

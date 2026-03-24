@@ -111,24 +111,24 @@ def scrape_job_hunting_sux(session: requests.Session) -> list:
 
 
 def scrape_ali_rohde_jobs(session: requests.Session) -> list:
-    return _extract_listings('https://www.alirohdejobs.com/feed', 'Ali Rohde Jobs', 'https://www.alirohdejobs.com/feed')
+    return _extract_listings('https://alirohdejobs.substack.com/feed', 'Ali Rohde Jobs', 'https://alirohdejobs.substack.com')
 
 
 def scrape_next_play(session: requests.Session) -> list:
-    return _extract_listings('https://nextplay.com/feed', 'Next Play', 'https://nextplay.com/feed')
+    return _extract_listings('https://nextplayso.substack.com/feed', 'Next Play', 'https://nextplayso.substack.com')
 
 
 def scrape_nonlinear_techies(session: requests.Session) -> list:
-    return _extract_listings('https://nonlineartechies.com/feed', 'Nonlinear Techies', 'https://nonlineartechies.com/feed')
+    return _extract_listings('https://nonlineartechies.substack.com/feed', 'Nonlinear Techies', 'https://nonlineartechies.substack.com')
 
 
 def scrape_beyond_bay_st(session: requests.Session) -> list:
-    return _extract_listings('https://beyondbay.st/feed', 'Beyond Bay St', 'https://beyondbay.st/feed')
+    return _extract_listings('https://beyondbayst.substack.com/feed', 'Beyond Bay St', 'https://beyondbayst.substack.com')
 
 
 def scrape_why_you_should_join(session: requests.Session) -> list:
-    return _extract_listings('https://whyyoushouldj.com/feed', 'Why You Should Join', 'https://whyyoushouldj.com/feed')
+    return _extract_listings('https://whyyoushouldjoin.substack.com/feed', 'Why You Should Join', 'https://whyyoushouldjoin.substack.com')
 
 
 def scrape_web_of_jobs(session: requests.Session) -> list:
-    return _extract_listings('https://webof.jobs/feed', 'Web of Jobs', 'https://webof.jobs/feed')
+    return _extract_listings('https://webofjobs.substack.com/feed', 'Web of Jobs', 'https://webofjobs.substack.com')

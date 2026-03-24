@@ -6,10 +6,24 @@ import type { Job } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
+const SORT_COL_MAP: Record<string, string> = {
+  role: 'role_title',
+  company: 'company',
+  source: 'source_name',
+  date: 'date_scraped',
+};
+
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { week?: string; curated?: string; keyword?: string; page?: string };
+  searchParams: {
+    week?: string;
+    curated?: string;
+    keyword?: string;
+    page?: string;
+    sort?: string;
+    dir?: string;
+  };
 }) {
   const supabase = createServerClient();
 
@@ -33,7 +47,12 @@ export default async function HomePage({
   const page = parseInt(searchParams.page ?? '1', 10);
   const pageSize = 50;
 
-  // Step 4: build query
+  // Step 4: resolve sort — default to date desc
+  const sortKey = searchParams.sort ?? 'date';
+  const sortDir = searchParams.dir === 'asc' ? true : false; // ascending flag
+  const dbSortCol = SORT_COL_MAP[sortKey] ?? 'date_scraped';
+
+  // Step 5: build query
   let query = supabase
     .from('jobs')
     .select('*', { count: 'exact' })
@@ -49,12 +68,10 @@ export default async function HomePage({
     );
   }
 
-  const from = 0;
-  const to = page * pageSize - 1;
-
+  // Accumulate rows from page 1 up to current page so "load more" works
   const { data: jobs, count } = await query
-    .order('date_scraped', { ascending: false })
-    .range(from, to);
+    .order(dbSortCol, { ascending: sortDir })
+    .range(0, page * pageSize - 1);
 
   return (
     <Suspense fallback={null}>

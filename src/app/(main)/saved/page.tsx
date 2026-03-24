@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Bookmark, ChevronUp, ChevronDown, ChevronsUpDown, X } from 'lucide-react';
+import { Bookmark, ChevronUp, ChevronDown, ChevronsUpDown, Search, X } from 'lucide-react';
+import Link from 'next/link';
 import type { Job } from '@/types';
 import { createBrowserClient } from '@/lib/supabase-browser';
 import { getSavedIds, toggleSave } from '@/lib/savedJobs';
@@ -10,12 +11,6 @@ import JobDetailPanel from '@/components/JobDetailPanel';
 
 type SortCol = 'role' | 'company' | 'source' | 'date';
 type SortDir = 'asc' | 'desc';
-
-interface ColFilters {
-  role: string;
-  company: string;
-  source: string;
-}
 
 function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol | null; sortDir: SortDir }) {
   if (sortCol !== col) return <ChevronsUpDown size={12} className="opacity-30" />;
@@ -29,8 +24,7 @@ export default function SavedPage() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [sortCol, setSortCol] = useState<SortCol | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [colFilters, setColFilters] = useState<ColFilters>({ role: '', company: '', source: '' });
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
     const ids = getSavedIds();
@@ -73,23 +67,16 @@ export default function SavedPage() {
     }
   };
 
-  const hasColFilter = colFilters.role || colFilters.company || colFilters.source;
-  const clearColFilters = () => setColFilters({ role: '', company: '', source: '' });
-
   const processedJobs = useMemo(() => {
     let result = [...jobs];
 
-    if (colFilters.role) {
-      const q = colFilters.role.toLowerCase();
-      result = result.filter((j) => j.role_title.toLowerCase().includes(q));
-    }
-    if (colFilters.company) {
-      const q = colFilters.company.toLowerCase();
-      result = result.filter((j) => j.company.toLowerCase().includes(q));
-    }
-    if (colFilters.source) {
-      const q = colFilters.source.toLowerCase();
-      result = result.filter((j) => j.source_name.toLowerCase().includes(q));
+    if (searchValue) {
+      const q = searchValue.toLowerCase();
+      result = result.filter(
+        (j) =>
+          j.role_title.toLowerCase().includes(q) ||
+          j.company.toLowerCase().includes(q)
+      );
     }
 
     if (sortCol) {
@@ -106,7 +93,7 @@ export default function SavedPage() {
     }
 
     return result;
-  }, [jobs, colFilters, sortCol, sortDir]);
+  }, [jobs, searchValue, sortCol, sortDir]);
 
   const headerCell = (label: string, col: SortCol, extraClass = '') => (
     <button
@@ -121,7 +108,7 @@ export default function SavedPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <span className="text-zinc-500 text-sm">Loading...</span>
+        <span className="text-zinc-500 text-sm">Loading…</span>
       </div>
     );
   }
@@ -136,31 +123,51 @@ export default function SavedPage() {
       {savedIds.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full gap-3">
           <Bookmark size={32} className="text-zinc-700" />
-          <span className="text-zinc-400">No saved jobs</span>
+          <span className="text-zinc-400">No saved jobs yet</span>
           <span className="text-sm text-zinc-500">Bookmark a listing to save it here</span>
+          <Link
+            href="/"
+            className="mt-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+          >
+            Browse jobs →
+          </Link>
         </div>
       ) : (
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Results bar */}
-            <div className="px-4 py-2.5 border-b border-zinc-800 flex items-center gap-3 text-xs text-zinc-500 flex-shrink-0">
-              <span>{hasColFilter ? `${processedJobs.length} of ${jobs.length}` : jobs.length} saved</span>
-              <div className="flex-1" />
-              <button
-                onClick={() => { setShowFilters((v) => !v); if (showFilters) clearColFilters(); }}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${showFilters ? 'bg-violet-500/20 text-violet-300' : 'hover:text-zinc-300'}`}
-              >
-                Filter columns
-              </button>
-              {hasColFilter && (
-                <button onClick={clearColFilters} className="flex items-center gap-0.5 hover:text-zinc-300 transition-colors">
-                  <X size={11} /> Clear
-                </button>
-              )}
+            {/* Search bar */}
+            <div className="px-4 py-3 border-b border-zinc-700/60 bg-zinc-900/80 flex-shrink-0">
+              <div className="relative">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Search saved roles or companies…"
+                  className="w-full bg-zinc-800 border border-zinc-700/80 rounded-lg pl-9 pr-8 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-violet-400"
+                />
+                {searchValue && (
+                  <button
+                    onClick={() => setSearchValue('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Column headers */}
-            <div className="border-b border-zinc-800 bg-zinc-900/80 flex-shrink-0">
+            {/* Results bar */}
+            <div className="px-4 py-2 border-b border-zinc-700/60 bg-zinc-900/40 flex items-center gap-2 text-xs text-zinc-500 flex-shrink-0">
+              <span>
+                {searchValue
+                  ? `${processedJobs.length} of ${jobs.length} saved`
+                  : `${jobs.length} saved role${jobs.length !== 1 ? 's' : ''}`}
+              </span>
+            </div>
+
+            {/* Column headers — desktop only */}
+            <div className="border-b border-zinc-800 bg-zinc-900/80 flex-shrink-0 hidden md:block">
               <div className="flex items-center gap-3 px-4 py-2">
                 <div className="w-2 flex-shrink-0" />
                 <div className="flex-1 min-w-0" style={{ maxWidth: 260 }}>
@@ -173,45 +180,10 @@ export default function SavedPage() {
                 <div className="flex-shrink-0" style={{ width: 120 }}>
                   {headerCell('Source', 'source')}
                 </div>
-                <div className="flex-shrink-0 text-right" style={{ width: 36 }}>
+                <div className="flex-shrink-0 text-right" style={{ width: 44 }}>
                   {headerCell('When', 'date', 'justify-end')}
                 </div>
               </div>
-
-              {showFilters && (
-                <div className="flex items-center gap-3 px-4 pb-2">
-                  <div className="w-2 flex-shrink-0" />
-                  <div className="flex-1 min-w-0" style={{ maxWidth: 260 }}>
-                    <input
-                      type="text"
-                      placeholder="Filter role…"
-                      value={colFilters.role}
-                      onChange={(e) => setColFilters((f) => ({ ...f, role: e.target.value }))}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-400"
-                    />
-                  </div>
-                  <div className="hidden sm:block flex-shrink-0" style={{ width: 180 }}>
-                    <input
-                      type="text"
-                      placeholder="Filter company…"
-                      value={colFilters.company}
-                      onChange={(e) => setColFilters((f) => ({ ...f, company: e.target.value }))}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-400"
-                    />
-                  </div>
-                  <div className="flex-1" />
-                  <div className="flex-shrink-0" style={{ width: 120 }}>
-                    <input
-                      type="text"
-                      placeholder="Filter source…"
-                      value={colFilters.source}
-                      onChange={(e) => setColFilters((f) => ({ ...f, source: e.target.value }))}
-                      className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-400"
-                    />
-                  </div>
-                  <div className="flex-shrink-0" style={{ width: 36 }} />
-                </div>
-              )}
             </div>
 
             {/* Job list */}
@@ -220,6 +192,14 @@ export default function SavedPage() {
                 <div className="flex flex-col items-center justify-center h-full gap-3">
                   <Bookmark size={32} className="text-zinc-700" />
                   <span className="text-zinc-400">No matches</span>
+                  {searchValue && (
+                    <button
+                      onClick={() => setSearchValue('')}
+                      className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </div>
               ) : (
                 processedJobs.map((job) => (
