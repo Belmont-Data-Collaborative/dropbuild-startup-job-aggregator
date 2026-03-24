@@ -202,10 +202,11 @@ export default function SavedPage() {
                   )}
                 </div>
               ) : (
-                processedJobs.map((job) => (
+                processedJobs.map((job, idx) => (
                   <JobRow
                     key={job.id}
                     job={job}
+                    index={idx}
                     isSelected={selectedJob?.id === job.id}
                     isSaved={savedIds.includes(job.id)}
                     onSelect={setSelectedJob}

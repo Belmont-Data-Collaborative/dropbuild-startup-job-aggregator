@@ -2,23 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Thin styled scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #3f3f46; /* zinc-700 */
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #52525b; /* zinc-600 */
-}
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #52525b; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #71717a; }
 
-/* Text selection */
-::selection {
-  background: rgba(167, 139, 250, 0.3); /* violet-400/30 */
-}
+/* ── Text selection ─────────────────────────────────────────── */
+::selection { background: rgba(167, 139, 250, 0.25); }
+
+/* ── Row striping — applied by index in JS, not CSS nth-child ── */
+/* even rows (index 0, 2, 4…) — transparent, inherits bg-zinc-950 */
+/* odd rows  (index 1, 3, 5…) — subtle stripe */
+.row-stripe { background-color: rgba(39, 39, 42, 0.35); } /* zinc-800/35 */
+
+/* ── Hover override that wins over both stripe states ───────── */
+.job-row:hover  { background-color: rgba(63, 63, 70, 0.45) !important; } /* zinc-700/45 */
+.job-row.selected { background-color: rgb(39, 39, 42) !important; }       /* zinc-800 */

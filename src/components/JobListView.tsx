@@ -184,10 +184,11 @@ export default function JobListView({
             </div>
           ) : (
             <>
-              {jobs.map((job) => (
+              {jobs.map((job, idx) => (
                 <JobRow
                   key={job.id}
                   job={job}
+                  index={idx}
                   isSelected={selectedJob?.id === job.id}
                   isSaved={savedIds.includes(job.id)}
                   onSelect={setSelectedJob}
