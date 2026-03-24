@@ -35,7 +35,8 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
       )
     )
   );
-  const [saving, setSaving] = useState(false);
+  const [savingSources, setSavingSources] = useState(false);
+  const [savingFilter, setSavingFilter] = useState(false);
   const [saveSourcesStatus, setSaveSourcesStatus] = useState<'idle' | 'saved'>('idle');
   const [saveFilterStatus, setSaveFilterStatus] = useState<'idle' | 'saved'>('idle');
   const [newName, setNewName] = useState('');
@@ -56,7 +57,7 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
   const [testError, setTestError] = useState('');
 
   const handleSaveSources = async () => {
-    setSaving(true);
+    setSavingSources(true);
     try {
       await fetch('/api/admin', {
         method: 'POST',
@@ -66,7 +67,7 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
       setSaveSourcesStatus('saved');
       setTimeout(() => setSaveSourcesStatus('idle'), 3000);
     } finally {
-      setSaving(false);
+      setSavingSources(false);
     }
   };
 
@@ -77,7 +78,7 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
         v.split('\n').map((s) => s.trim()).filter(Boolean),
       ])
     );
-    setSaving(true);
+    setSavingFilter(true);
     try {
       await fetch('/api/admin', {
         method: 'POST',
@@ -88,7 +89,7 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
       setSaveFilterStatus('saved');
       setTimeout(() => setSaveFilterStatus('idle'), 3000);
     } finally {
-      setSaving(false);
+      setSavingFilter(false);
     }
   };
 
@@ -429,10 +430,10 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={handleSaveSources}
-              disabled={saving}
+              disabled={savingSources}
               className="bg-primary text-on-primary text-xs px-3 py-1.5 rounded-shape-full disabled:opacity-50 hover:opacity-90 transition-opacity"
             >
-              {saving ? 'Saving...' : 'Save Sources'}
+              {savingSources ? 'Saving...' : 'Save Sources'}
             </button>
             {saveSourcesStatus === 'saved' && (
               <span className="flex items-center gap-1 text-xs text-tertiary">
@@ -461,10 +462,10 @@ export default function AdminView({ runs, sources, filterConfig, emailRecipients
           <div className="flex items-center gap-2 mt-2">
             <button
               onClick={handleSaveFilterConfig}
-              disabled={saving}
+              disabled={savingFilter}
               className="bg-primary text-on-primary text-xs px-3 py-1.5 rounded-shape-full disabled:opacity-50 hover:opacity-90 transition-opacity"
             >
-              {saving ? 'Saving...' : 'Save Filter Config'}
+              {savingFilter ? 'Saving...' : 'Save Filter Config'}
             </button>
             {saveFilterStatus === 'saved' && (
               <span className="flex items-center gap-1 text-xs text-tertiary">

@@ -119,7 +119,10 @@ export default function Sidebar() {
         >
           <Menu size={22} />
         </button>
-        <span className="text-base font-medium text-on-surface ml-2">Startup Jobs</span>
+        <span className="text-base font-medium text-on-surface ml-2">
+          {navLinks.find((l) => l.href === pathname)?.label
+            ?? (pathname === '/admin' ? 'Admin' : 'Startup Jobs')}
+        </span>
       </div>
 
       {/* ── Mobile — Modal navigation drawer ── */}
